@@ -1,7 +1,7 @@
 import React, { useEffect,useContext, useState } from 'react'
 import { toast } from 'react-toastify';
 import Box from '@mui/material/Box';
-import { DataGrid,GridToolbar } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -10,34 +10,24 @@ import Button from '@mui/material/Button';
 import Cookies from 'universal-cookie';
 import { AuthContext } from '../AuthContext';
 import axios from 'axios';
-import FileUpload from '../component/FileUpload';
+import FileUpload from './FileUpload';
 
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://143.110.243.227';
 const columns = [
-    { field: 'id', headerName: 'SL', width: 70 },
-    { field: 'family', headerName: 'Family', width: 130, 
-        renderCell: (params) =>params.row.family?.name || 'No family' ,
-    
-    } ,
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'itemtype', headerName: 'Item Types', width: 130, renderCell: (params) =>params.row.itemtype?.name || 'No Item Types' } ,
     { field: 'name', headerName: 'Name', width: 130 },
-    { field: 'assignedNo', headerName: 'ASIGNED NO', width: 130 },
-    {
-      field: 'shortform',
-      headerName: 'SHORTFORM',
-      width: 130,
-    },
+   
    
   ];
   
-function ItemTypes() {
-    const [types,setTypes] = useState(null)
-    const [tempTypes,setTempTypes] = useState(null)
-    const [tempFamily,setTempFamily] = useState(null)
-    const [family,setFamily] = useState(null)
+function Format3(props) {
+    const [subtype,setSubType] = useState(null)
+    const [tempsubtype,setTempSubType] = useState(null)
+    const [tempItemTypes,setTempItemTypes] = useState(null)
+    const [itemTypes,setItemTypes] = useState(null)
     const [row,setrow] = useState('')
     const {token,logout } = useContext(AuthContext);
-    const handleNewItem = () =>setrow({'id':'','type':'direct','family':'','name':'','assignedNo':'','shortform':''})
+    const handleNewItem = () =>setrow({'id':'','type':'direct','category':'','name':''})
     const handleRowClick = (params) => {
         setrow(params.row);
     };
@@ -58,9 +48,8 @@ function ItemTypes() {
         
     }
     const updateItem = async (formdata)=>{
-
         try{
-            const res = await axios.patch('/itemtypes/'+row.id+"/",{formdata}, {
+            const res = await axios.patch(props.apiurl +row.id+ "/",{formdata}, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },
@@ -68,8 +57,8 @@ function ItemTypes() {
             });
             if(res.status===200){
                 const resdata = res.data || null
-                setTypes(resdata.itemtypes)
-                setTempTypes(resdata.itemtypes)
+                setSubType(resdata.item)
+                setTempSubType(resdata.item)
                 toast.success("Updated Successfully")
             }
         }
@@ -85,23 +74,17 @@ function ItemTypes() {
     }
     const createNewItem = async (formdata)=>{
         try{
-            const res = await axios.post('/itemtypes/',{formdata}, {
+            const res = await axios.post(props.apiurl,{formdata}, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },
                 withCredentials: true
             });
             if(res.status===200){
-                if (res.data.warning){
-                    toast.warning(res.data.warning)
-                }
-                else{
-                    const resdata = res.data || null
-                    setTypes(resdata.itemtypes)
-                    setTempTypes(resdata.itemtypes)
-                    toast.success("Saved Successfully")
-                }
-             
+                const resdata = res.data || null
+                setSubType(resdata.item)
+                setTempSubType(resdata.item)
+                toast.success("Saved Successfully")
             }
         }
       catch(error){
@@ -116,10 +99,11 @@ function ItemTypes() {
 
     }
     useEffect(()=>{
+        let isMounted = true
         const cookies = new Cookies()
         const usertoken = cookies.get('access')
      
-            const res =  axios.get('/itemtypes/', {
+            const res =  axios.get(props.apiurl, {
               headers: {
                   'Authorization': `Bearer ${usertoken}`
               },
@@ -127,46 +111,46 @@ function ItemTypes() {
           });
           res
           .then((response)=>{
-          if(response.status === 200){
+          if(response.status === 200 && isMounted === true){
             const resdata = response.data || null
-            setTypes(resdata.itemtypes)
-            setTempTypes(resdata.itemtypes)
-            setFamily(resdata.itemfamily)
-            setTempFamily(resdata.itemfamily)
-            
-            console.log(tempTypes)
+            console.log(resdata)
+            setSubType(resdata.item)
+            setTempSubType(resdata.item)
+            setItemTypes(resdata.itemtype)
+            setTempItemTypes(resdata.itemtype)
           }
 
           })
           .catch((error)=>{
             console.log(error)
-            if(error.response.status === 401){
+            if(error.response.status === 401 && isMounted === true){
              toast.warning("session timeout")
-             logout()
+          
             }
             else if(error.response.status === 404){
              toast.warning("wrong url")
             }
           })
           
-         
+         return ()=>{
+            isMounted = false
+         };
 
         
-    },[logout])
+    },[])
   return (
     <div>
-     <h3 className='p-2 bg-indigo-600 text-white font-mono '>ITEM FAMILY</h3>
+     <h3 className='p-2 bg-indigo-600 text-white font-mono '>{props.heading}</h3>
         <div>
             <div style={{ height: 400, width: '100%' }}>
                 <DataGrid
-                    rows={tempTypes}
+                    rows={tempsubtype}
                     columns={columns}
                     initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 5 },
                     },
                     }}
-                    slots={{ toolbar: GridToolbar }}
                     pageSizeOptions={[5, 10]}
                     checkboxSelection
                     onRowClick={handleRowClick}
@@ -182,8 +166,8 @@ function ItemTypes() {
                         name="type"
                         value={row.type ||"direct"} 
                         onChange={(e)=>{
-                            setTempTypes(types.filter(item=>item.type===e.target.value))
-                            setTempFamily(family.filter(item=>item.type===e.target.value))
+                            setTempItemTypes(itemTypes.filter(item=>item.type===e.target.value))
+                            setTempItemTypes(itemTypes.filter(item=>item.type===e.target.value))
                             setrow((prevData) => ({
                                     ...prevData,
                                     type: e.target.value
@@ -204,16 +188,16 @@ function ItemTypes() {
                     autoComplete="off"
                     >
                      <FormControl>
-                  <InputLabel id="family_label">Family</InputLabel>
+                  <InputLabel id="itemtype_label">Item Types</InputLabel>
                   <Select
-                    labelId="family_label"
-                    id="family"
-                    label="family"
-                    name="family"
-                    value={row.family?.id??""}
+                    labelId="itemtype_label"
+                    id="itemtype"
+                    label="Item Type"
+                    name="itemtype"
+                    value={row.itemtype?.id??""}
                     onChange={(e)=>setrow((prevData) => ({
                                     ...prevData,
-                                    family:{ ...(prevData.family ?? {}),  // Use empty object if category is null or undefined
+                                    itemtype:{ ...(prevData.itemtype ?? {}),  // Use empty object if category is null or undefined
                                     id: e.target.value
                                      }
                                 }))}
@@ -221,10 +205,10 @@ function ItemTypes() {
                     <MenuItem value="">Select</MenuItem>
                 
                     {    
-                        family && family.length > 0 ?
+                        itemTypes && itemTypes.length > 0 ?
                         (
                              
-                            tempFamily.filter(element => element.type === row.type || 'direct')
+                            tempItemTypes.filter(element => element.type === row.type || 'direct')
                             .map(element => (
                                             <MenuItem value={element.id} key={element.id}>
                                                 {element.name}
@@ -238,18 +222,18 @@ function ItemTypes() {
                   </Select>
                 </FormControl>
                     <TextField id="name" name='name' label="Name" variant="outlined" InputLabelProps={{shrink: true,}} value={row.name} onChange={(e)=>(setrow((prevData)=>({...prevData,name:e.target.value})))}/>
-                    <TextField id="assigned_no" name='assignedNo' label="Assigned No" variant="outlined" InputLabelProps={{shrink: true,}} value={row.assignedNo} onChange={(e)=>(setrow((prevData)=>({...prevData,assignedNo:e.target.value})))} />
-                    <TextField id="short_form" name='shortform' label="Short Form" variant="outlined" InputLabelProps={{shrink: true,}} value={row.shortform} onChange={(e)=>(setrow((prevData)=>({...prevData,shortform:e.target.value})))} />
+                    
                     <div className='flex gap-2'>
                     <Button variant="contained" onClick={handleNewItem}>New</Button>
                     <Button variant="contained" type="submit">Save</Button>
                     </div>
                 </Box>
             </form>
-            {<FileUpload importurl="/importitemtype/" />}
+            {<FileUpload importurl={props.importurl} />}
             </div>
         </div>
     </div>
   )
 }
-export default ItemTypes
+
+export default Format3

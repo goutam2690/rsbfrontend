@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { FaBars, FaHome, FaKey, FaUser } from "react-icons/fa";
+import { FaBars, FaHome, FaKey } from "react-icons/fa";
 import { FaBookMedical } from "react-icons/fa6";
 import { useEffect } from 'react';
 import { BsGraphUpArrow } from "react-icons/bs";
@@ -34,7 +34,12 @@ const staffroutes = [
 
   {
     path: "/requisition",
-    name: "Requisition",
+    name: "Requisition ",
+    icon: <FaBookMedical />,
+  },
+  {
+    path: "/notation",
+    name: "Notation ",
     icon: <FaBookMedical />,
   },
 ]
@@ -65,13 +70,28 @@ const adminroutes = [
           icon: <FaBookMedical />,
         },
         {
-          path: "/subtype",
-          name: "Item Sub Types",
+          path: "/subtype1",
+          name: "Item Sub Types 1",
+          icon: <FaBookMedical />,
+        },
+        {
+          path: "/subtype2",
+          name: "Item Sub Types 2",
           icon: <FaBookMedical />,
         },
         {
           path: "/moc",
-          name: "Metal of Construction",
+          name: "Meterial of Construction",
+          icon: <FaBookMedical />,
+        },
+        {
+          path: "/mg",
+          name: "Meterial of grade",
+          icon: <FaBookMedical />,
+        },
+        {
+          path: "/specification",
+          name: "Specification",
           icon: <FaBookMedical />,
         },
         {
@@ -87,6 +107,16 @@ const adminroutes = [
         {
           path: "/supplytype",
           name: "Supply Type",
+          icon: <FaBookMedical />,
+        },
+        {
+          path: "/itemmake",
+          name: "Item Make",
+          icon: <FaBookMedical />,
+        },
+        {
+          path: "/otherdetails",
+          name: "Other Details",
           icon: <FaBookMedical />,
         },
         {
@@ -115,6 +145,11 @@ const adminroutes = [
             icon: <FaBookMedical />,
           },
           {
+            path: "/hsn",
+            name: "HSN Code",
+            icon: <FaBookMedical />,
+          },
+          {
             path: "/cmc/",
             name: "Commodity Class",
             icon: <FaBookMedical />,
@@ -136,7 +171,11 @@ const adminroutes = [
     name: "Report",
     icon: <BsGraphUpArrow />,
   },
-  
+  {
+    path: "/notation",
+    name: "Notation ",
+    icon: <FaBookMedical />,
+  },
   {
     path: "/settings",
     name: "Settings",
@@ -283,7 +322,7 @@ const SideBar = ({ children }) => {
 
   return (
     <>
-      <div className="main-container ">
+      <div className="main-container " key="main-container">
     {/* isMobile?(isOpen?30%:10%):isOpen?20%:5% */}
         <motion.div
           animate={{
@@ -295,12 +334,14 @@ const SideBar = ({ children }) => {
               damping: 10,
             },
           }}
+          key="sidebar"
           className={`sidebar w-full h-screen`}
         >
           <div key="top_section" className="top_section">
             <AnimatePresence>
               {isOpen && (
-                <motion.h1
+                <motion.h1 
+                key="esolution"
                   variants={showAnimation}
                   initial="hidden"
                   animate="show"
@@ -317,7 +358,7 @@ const SideBar = ({ children }) => {
             </div>
           </div>
          
-          <section className="routes">
+          <section className="routes" key="routes">
          
             {routes.map((route, index) => {
               if (route.subRoutes) {
@@ -327,7 +368,7 @@ const SideBar = ({ children }) => {
                     route={route}
                     showAnimation={showAnimation}
                     isOpen={isOpen}
-                    Key={index + "0"}
+                    key={index + "0"}
                   />
                 );
               }

@@ -25,10 +25,16 @@ import Uom from './pages/Uom';
 import Scm from './pages/Scm';
 import CommodityClass from './pages/CommodityClass';
 import Requisition from './pages/Requisition';
-import SubType from './pages/SubType';
-import ApproveRqList from './pages/ApproveRqList';
 import RequitionList from './pages/RequitionList';
 import Report from './pages/Report';
+import Subtype1 from './pages/Subtype1';
+import SubType2 from './pages/SubType2';
+import HsnCode from './pages/HsnCode';
+import Specification from './pages/Specification';
+import MaterialGrade from './pages/MaterialGrade';
+import ItemMake from './pages/ItemMake';
+import OtherDetails from './pages/OtherDetails';
+import Notation from './component/Notation';
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = 'http://127.0.0.1:8000';
 
@@ -63,10 +69,17 @@ function App() {
                   <Route path="glclass" element={<GlClass />} />
                   <Route path="cmc" element={<CommodityClass />} />
                   <Route path="scm" element={<Scm />} />
-                  <Route path="subtype" element={<SubType />} />
+                  <Route path="subtype2" element={<SubType2 />} />
+                  <Route path="subtype1" element={<Subtype1 />} />
                   <Route path="rqlist" element={<RequitionList />} />
                   <Route path="report" element={<Report />} />
                   <Route path="requisition" element={<Requisition />} />
+                  <Route path="hsn" element={<HsnCode />} />
+                  <Route path="specification" element={<Specification />} />
+                  <Route path="mg" element={<MaterialGrade />} />
+                  <Route path="itemmake" element={<ItemMake />} />
+                  <Route path="otherdetails" element={<OtherDetails />} />
+                  <Route path="notation" element={<Notation />} />
                 </Routes>
                 </SideBar>
               </ProtectedRoute>

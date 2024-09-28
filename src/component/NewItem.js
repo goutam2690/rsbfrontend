@@ -112,6 +112,7 @@ function NewItem({heading,apiurl}) {
           }
     }
     useEffect(()=>{
+      let isMounted = true
         const cookies = new Cookies()
         const token = cookies.get('access')
         try{
@@ -123,15 +124,17 @@ function NewItem({heading,apiurl}) {
           });
           res
           .then((response)=>{
-           
-            const cat = response.data?response.data:null
-            console.log(cat)
-            setData(cat.item)
-            setTempData(cat.item)
+            if(response.status === 200 && isMounted === true){
+              const cat = response.data?response.data:null
+              console.log(cat)
+              setData(cat.item)
+              setTempData(cat.item)
+            }
+          
           })
           .catch((error)=>{
             console.error("catched error",error.response.status)
-            if(error.response.status === 401){
+            if(error.response.status === 401 && isMounted === true){
                 toast.warning("Session expired")
                 logout()
             }
@@ -144,6 +147,9 @@ function NewItem({heading,apiurl}) {
             toast.warning("session timeout")
             logout()
           }
+          return () => {
+            isMounted = false; // Cleanup flag on unmount
+          };
     },[])
   return (
     <>

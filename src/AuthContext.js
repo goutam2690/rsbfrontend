@@ -5,7 +5,7 @@ import Cookies from 'universal-cookie';
 import { toast } from 'react-toastify';
 export const AuthContext = createContext();
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://127.0.0.1:8000';
+axios.defaults.baseURL = 'http://143.110.243.227';
 export const AuthProvider = ({ children }) => {
     
     const cookies = new Cookies()
@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
     }
   
     const [user, setUser] = useState(userdata);
-   console.log(user)
+
     // const [csrf,setCsrf] = useState('')
     const [token,setToken] = useState(cookies.get('access'))
     useEffect(() => {
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     // }
     const login = async (username, password) => {
         try{
-            const res = await axios.post('http://127.0.0.1:8000/api/token/', { username, password }, {
+            const res = await axios.post('/api/token/', { username, password }, {
                 withCredentials: true
             });
             
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
         try {
            
            
-            await axios.post('http://127.0.0.1:8000/api/logout/', {}, {
+            await axios.post('/api/logout/', {}, {
                 headers: {
                 'Authorization': `Bearer ${token}`
             },

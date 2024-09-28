@@ -9,7 +9,25 @@ import { Box, Button, Input } from '@mui/material';
 const columns = [
   { field: 'id', headerName: 'Trn No', width: 50 },
   { field: 'created', headerName: 'Date', width: 130 },
+  {field:'day',headerName:"Since",width:160,renderCell:(params)=>{
+    const now = new Date(); // Current date and time
+const target = new Date(params.row.created); // Convert the target date to a Date object
+
+// Calculate the difference in milliseconds
+const differenceInMilliseconds = target - now;
+
+// Convert milliseconds to days, hours, minutes
+const millisecondsInADay = 1000 * 60 * 60 * 24;
+const millisecondsInAnHour = 1000 * 60 * 60;
+const millisecondsInAMinute = 1000 * 60;
+
+const days = Math.floor(differenceInMilliseconds / millisecondsInADay);
+const hours = Math.floor((differenceInMilliseconds % millisecondsInADay) / millisecondsInAnHour);
+const minutes = Math.floor((differenceInMilliseconds % millisecondsInAnHour) / millisecondsInAMinute);
+return ` Days: ${days} Hours: ${hours} minutes ${minutes}`
+}},
   { field: 'user', headerName: 'User', width: 130, renderCell: (params) => params.row.user?.username },
+  { field: 'unit', headerName: 'Unit', width:130, renderCell: (params) => params.row.branch?.unit},
   { field: 'branch', headerName: 'Branch', width:130, renderCell: (params) => params.row.branch?.branch},
   { field: 'type', headerName: 'Type', width: 70 },
   { field: 'itemcategory', headerName: 'Item Category', width: 130,  renderCell: (params) =>params.row.itemcategory?.name || ''  },
@@ -147,6 +165,7 @@ function Report() {
       
       
     useEffect(()=>{
+        let isMounted = true; // Flag to track component mount status
       const cookies = new Cookies()
       const token = cookies.get('access')
       const res =  axios.get("/requisition/", {
@@ -157,17 +176,22 @@ function Report() {
     });
     res
     .then((response)=>{
-      if(response.status === 200){
+      if(response.status === 200 && isMounted === true){
         console.log(response.data)
         setReqList(response.data.rq)
         setTempReq(response.data.rq)
       }
     })
     .catch((error)=>{
+        if (isMounted) {
       console.log(error)
       toast.warning('Session expired')
       logout()
+        }
     })
+    return () => {
+        isMounted = false; // Cleanup flag on unmount
+      };
     },[])
     return (
       <div id='rqlist'>
@@ -204,6 +228,7 @@ function Report() {
               initialState={{
                 columns: {
                     columnVisibilityModel: columnVisibilityModel,
+                    
                     },
               pagination: {
                   paginationModel: { page: 0, pageSize: 5 },
@@ -211,7 +236,9 @@ function Report() {
               }}
               pageSizeOptions={[5, 10, 50]}
               slots={{ toolbar: GridToolbar }}
-              
+              onColumnVisibilityModelChange={(newModel) =>
+    setColumnVisibilityModel(newModel)
+  } 
           />
         </div>
       </div>

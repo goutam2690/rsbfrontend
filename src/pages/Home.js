@@ -8,6 +8,7 @@ import axios from 'axios';
 const columns = [
     { field: 'id', headerName: 'Trn No', width: 50 },
     { field: 'created', headerName: 'Date', width: 130 },
+    { field: 'unit', headerName: 'Unit', width:130, renderCell: (params) => params.row.branch?.unit},
     { field: 'branch', headerName: 'Branch', width:130, renderCell: (params) => params.row.branch?.branch},
     { field: 'type', headerName: 'Type', width: 70 },
     { field: 'itemcategory', headerName: 'Item Category', width: 130,  renderCell: (params) =>params.row.itemcategory?.name || ''  },

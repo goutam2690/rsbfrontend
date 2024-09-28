@@ -104,6 +104,7 @@ function ItemFamily({heading,apiurl}) {
 
     }
     useEffect(()=>{
+        let isMounted = true
         const cookies = new Cookies()
         const usertoken = cookies.get('access')
      
@@ -115,7 +116,7 @@ function ItemFamily({heading,apiurl}) {
           });
           res
           .then((response)=>{
-          if(response.status === 200){
+          if(response.status === 200 && isMounted === true){
             const resdata = response.data || null
             console.log(resdata)
             setfamily(resdata.item)
@@ -127,7 +128,7 @@ function ItemFamily({heading,apiurl}) {
           })
           .catch((error)=>{
             console.log(error)
-            if(error.response.status === 401){
+            if(error.response.status === 401 && isMounted === true){
              toast.warning("session timeout")
           
             }
@@ -136,7 +137,9 @@ function ItemFamily({heading,apiurl}) {
             }
           })
           
-         
+         return ()=>{
+            isMounted = false
+         };
 
         
     },[])

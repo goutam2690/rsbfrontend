@@ -1,4 +1,4 @@
-import React, { useState,useContext, useEffect } from 'react'
+import React, { useState,useContext, useEffect, useLayoutEffect, useRef } from 'react'
 import { toast } from 'react-toastify';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -20,65 +20,30 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-
-
-const mg = [
-    "1E0107",
-    "450FH",
-    "450HI",
-    "ASTM-572B",
-    "AU-14 DQ IS 513",
-    "AU-14 EDD IS 513",
-    "E250",
-    "E350",
-    "E450",
-    "DILLIDUR400V",
-    "CQ",
-    "E410W",
-    "E410",
-    "E300A",
-    "E34",
-    "E350C",
-    "E38",
-    "Fe410",
-    "EN34",
-    "EN10025",
-    "E46",
-    "EN31",
-    "HARDOX-400",
-    "DD-1079",
-    "IS-2062",
-    "QUEND-700",
-    "ROCK STAR-400",
-    "ST52.3",
-    "TIST-52",
-    "WELDOX-500",
-    "WELDOX-700",
-    "WELDOX-700E",
-    "WELTEN-780",
-    "WELTEN-590",
-    "WELTEN-600",
-    ">WELTEN-800",
-    "WELTEN-780C",
-    "C-35"
-]
+import { FaWindowClose } from 'react-icons/fa';
 
 
 
 
-function NewRequisition() {
+
+function NewRequisition(props) {
     const [loading,setLoading] = useState(true)
     const [master,setMaster] = useState(null)
     const [type,setType] = useState('direct')
     const {logout } = useContext(AuthContext);
+    const [itemmake,setItemMake] = useState(null)
     const [itemcategory,setItemCategory] = useState(null)
     const [itemfamily,setItemFamily] = useState(null)
     const [itemType,setItemType] = useState(null)
     const [moc,setMoc] = useState(null)
+    const [mg,setMg] = useState(null)
     const [subtype1,setSubType1] = useState(null)
     const [subtype2,setSubType2] = useState(null)
     const [process,setProcess] = useState(null)
     const [stage,setStage] = useState(null)
+    const [specification,setSpecification] = useState(null)
+    const [dimensions,setDimension] = useState(null)
+    const [otherdetails,setOtherDetails] = useState(null)
     const [supplyType,setSupplyType] = useState(null)
     const [stockingType,setStockingType] = useState(null)
     const [glclass,setGlClass] = useState(null)
@@ -89,6 +54,11 @@ function NewRequisition() {
     const [open,setOpen] = useState(false)
     const [sl,setSl] = useState(null)
     const [found,setFound] = useState(false)
+    const [hsn,setHsn] = useState(null)
+    const [commodity,setCommodity] = useState(null)
+    const [subcommodity,setSubCommodity] = useState(null)
+    const editrow = useRef(props.editRow)
+   const familyids = [70,72,55,56,57,59]
     const [selectValue,setSelectValue] = useState(
       {
         "id":"",
@@ -96,10 +66,14 @@ function NewRequisition() {
         "itemcategory":"",
         "itemfamily":"",
         "itemtypes":"",
+        "otheritemtype":"",
         "subtype1":"",
+        "othersubtype1":"",
         "subtype2":"",
+        "othersubtype2":"",
         "moc":"",
         "meterialgrade":"",
+        "materialg":"",
         "itemmake":"",
         "specification":"",
         "dimension":"",
@@ -111,6 +85,9 @@ function NewRequisition() {
         "glclass":"",
         "uom":"",
         "linetype":"",
+        'hsn':'',
+        "commodity":"",
+        "subcommodity":"",
         "slno":"",
         "itemno":'',
         "description":""
@@ -129,6 +106,7 @@ function NewRequisition() {
         })
         setItemCategory(master.item_categories.filter((col)=>col.type===radiovalue))
         setItemFamily(master.families.filter((col)=>col.type===radiovalue))
+        setSpecification(master.specification.filter((col)=>col.type===radiovalue))
     
     }
     
@@ -148,56 +126,168 @@ function NewRequisition() {
         }
         return result;
     }
-    function generatecode(){
-      const categ = itemcategory.find(element=>element.id===selectValue.itemcategory)
-      const fam = itemfamily.find(element=>element.id===selectValue.itemfamily)
-      const itemtp = itemType.find(element=>element.id===selectValue.itemtypes)
-      const moc_code = moc.find(element=>element.id===selectValue.moc)
-      const itemc = selectValue.itemcategory
-      const itemmoc =  selectValue.moc
-      const itemf = selectValue.itemfamily
-      const itemt = selectValue.itemtypes 
-      const supplyt = supplyType.find(element=>element.id===selectValue.supplytype)
-      const subtype1code = selectValue.subtype1
-      const subtype2code = selectValue.subtype2
-      var item_code = ""
-      var descrptn = ""
-      if(type === "indirect"){
-        descrptn = subtype1code + " " + itemtp.name + " " + selectValue.specification
-        getindirectItemRecord({itemc,itemf,itemt})
-        item_code = categ.assignedNo + fam.assignedNo + itemtp.assignedNo + "000" + (sl + 1)
-
+    function validateField(obj){
+      let indirectFields = [
+        'itemcategory',
+        'itemfamily',
+        'itemtypes',
+        'subtype1',
+        'subtype2',
+        'stockingtype',
+        'glclass',
+        'uom',
+        'linetype',
+      ]
+      let directFields = [
+        'itemcategory',
+        'itemfamily',
+        'itemtypes',
+        'subtype1',
+        'subtype2',
+        'moc',
+        'supplytype',
+        'stockingtype',
+        'glclass',
+        'uom',
+        'linetype',
+      ]
+      
+      let requiredFields = ""
+      if(type==='direct'){
+        requiredFields =directFields;
       }
       else{
-        descrptn = subtype1code + " " + itemtp.name + " " + subtype2code 
-        getItemRecord({itemc,itemmoc,itemf,itemt})
-        item_code = categ.assignedNo + moc_code.assignedNo + fam.assignedNo + itemtp.assignedNo + "000" + (sl + 1) + supplyt.assignedNo
-
+        requiredFields = indirectFields;
       }
-      const splited_desc = splitString(descrptn,30)
+      for (const field of requiredFields) {
+       
+        if (obj[field] === null || obj[field] === '') {
+          toast.warning(`Field ${field} is required`)
+          return false; // Field is null or blank
+        }
+       
+       
+      }
+    
+      return true; // All fields are valid
+    }
+    function generatecode(){
       
-      console.log(sl)
-      const validdesc = ValidateDescription(item_code,descrptn)
-      setItemCode(item_code)
-      setDescription(splited_desc)
-      
-      setSelectValue({
-        ...selectValue,
-        "slno":(sl+1),
-        'itemno':item_code,
-        "description":descrptn
-      })
+      let vfield = validateField(selectValue)
+      function generate(){
+        const categ = itemcategory.find(element=>element.id===selectValue.itemcategory)
+        const fam = itemfamily.find(element=>element.id===selectValue.itemfamily)
+        const itemtp = itemType.find(element=>element.id===selectValue.itemtypes)
+        const moc_code = moc.find(element=>element.id===selectValue.moc)
+        const itemc = selectValue.itemcategory
+        const itemmoc =  selectValue.moc
+        const itemf = selectValue.itemfamily
+        const itemt = selectValue.itemtypes 
+        const supplyt = supplyType.find(element=>element.id===selectValue.supplytype)
+        const subtype1code = selectValue.subtype1
+        const subtype2code = selectValue.subtype2
+        var item_code = ""
+        var descrptn = ""
+        var srl
+        if(type === "indirect"){
+          descrptn = subtype1code + " " + itemtp.name + " " + selectValue.specification
+          if(props.editRow){
+            setSl(props.editRow.slno)
+            srl = props.editRow.slno
+            setSl(Number(srl))
+          item_code = categ.assignedNo + fam.assignedNo + itemtp.assignedNo + (Number(srl)).toString().padStart(4, '0')
+
+            }
+            else{
+              srl = getindirectItemRecord({itemc,itemf,itemt})
+              setSl(Number(srl)+1)
+          item_code = categ.assignedNo + fam.assignedNo + itemtp.assignedNo + (Number(srl) + 1).toString().padStart(4, '0')
+
+            }
+          
+
+        }
+        else{
+          descrptn = subtype1code + " " + itemtp.name + " " + subtype2code 
+          
+          if(props.editRow){
+            setSl(Number(props.editRow.slno))
+            srl = props.editRow.slno
+          item_code = categ?.assignedNo + moc_code?.assignedNo + fam?.assignedNo + itemtp?.assignedNo  + (Number(srl)).toString().padStart(4, '0') + supplyt.assignedNo
+
+            }
+            else{
+             srl =  getItemRecord({itemc,itemmoc,itemf,itemt})
+             setSl(Number(srl)+1)
+          item_code = categ?.assignedNo + moc_code?.assignedNo + fam?.assignedNo + itemtp?.assignedNo  + (Number(srl) + 1).toString().padStart(4, '0') + supplyt.assignedNo
+          console.log("before item code sl is",sl)
+            }
+         
+        
+
+        }
+        const splited_desc = splitString(descrptn,30)
+        
+        console.log("serial no is ",srl)
+        
+        if(props.editRow){
+
+          const itemno = props.editRow.itemno
+          console.log("types are",typeof(itemno),typeof(item_code),itemno,item_code,itemno===item_code)
+          if(props.editRow.itemno === item_code){
+            console.log("Do Not validate")
+            setOpen(true)
+            setFound(false)
+          }
+          else{
+            ValidateDescription(item_code,descrptn)
+          }
+        
+        }
+        else{
+          console.log("not row")
+          ValidateDescription(item_code,descrptn)
+        }
+
+        
+        setItemCode(item_code)
+        setDescription(splited_desc)
+        
+        setSelectValue({
+          ...selectValue,
+          "slno":(sl),
+          'itemno':item_code,
+          "description":descrptn
+        })
+    
+      }
+      vfield?generate()
+      : console.log(false)
   
     }
     async function CreateRequisition(){
       try{
         console.log("Data to save is",selectValue)
-        const res = await axios.post("/requisition/",{selectValue}, {
-          headers: {
-              'Authorization': `Bearer ${ntoken}`
-          },
-          withCredentials: true
-      });
+        let res = ""
+        console.log("props is ",props)
+        if(props.editRow){
+          console.log("props exists")
+          res = await axios.put("/requisition/"+props.editRow.id+"/",{selectValue}, {
+            headers: {
+                'Authorization': `Bearer ${ntoken}`
+            },
+            withCredentials: true
+        });
+        }
+        else{
+          res = await axios.post("/requisition/",{selectValue}, {
+            headers: {
+                'Authorization': `Bearer ${ntoken}`
+            },
+            withCredentials: true
+        });
+        }
+        
       const rec_response = res
       if(rec_response.status === 200){
         if(rec_response.data.exists){
@@ -265,6 +355,7 @@ function NewRequisition() {
         console.log(response)
         if(response.status === 200){
           setSl(response.data.record[0].indirectitemid)
+          return response.data.record[0].indirectitemid
         }
       })
       .catch((error)=>{
@@ -290,6 +381,7 @@ function NewRequisition() {
         console.log(response)
         if(response.status === 200){
           setSl(response.data.record[0].directitemid)
+          return response.data.record[0].directitemid
         }
       })
       .catch((error)=>{
@@ -301,7 +393,9 @@ function NewRequisition() {
       console.log(error)
     }
   }
+ 
     useEffect(()=>{
+      let isMounted = true
         async function MasterItem(){
             const cookies = new Cookies()
             const token = cookies.get('access')
@@ -315,16 +409,16 @@ function NewRequisition() {
           res
           .then((response)=>{
 
-           if(response.status === 200){
+           if(response.status === 200 && isMounted===true){
             const item = response.data?response.data:null
-            console.log(item)
+            console.log("items are",item)
             setMaster(item)
             setItemCategory(item.item_categories.filter((col)=>col.type === type))
             setItemFamily(item.families.filter((col)=>col.type === type))
             setItemType(item.item_types.filter(element => element.type === type))
             setMoc(item.metals_of_construction.filter(element => element.type === type))
-            setSubType1(item.subtype.filter(element => element.type === type && element.subtype1 !== ""))
-            setSubType2(item.subtype.filter(element => element.type === type && element.subtype2 !== ""))
+            setSubType1(item.subtype1.filter(element => element.type === type))
+            setSubType2(item.subtype2.filter(element => element.type === type))
             setProcess(item.processes.filter(element=>element.type === type))
             setStage(item.stages.filter(element=>element.type === type))
             setSupplyType(item.supply_types.filter(element=>element.type === type))
@@ -332,16 +426,25 @@ function NewRequisition() {
             setGlClass(item.gl_classes)
             setUom(item.uoms)
             setLineType(item.line_types)
+            setMg(item.materialgrade)
+            setItemMake(item.itemmake)
+            setSpecification(item.specification)
+            setOtherDetails(item.otherdetails)
+            setDimension(item.dimensions)
+            setHsn(item.hsn)
+            setCommodity(item.commodity)
+            setSubCommodity(item.subcommodity)
             setLoading(false)
            }
             
           })
           .catch((error)=>{
             console.error("catched error",error)
-            if(error.response.status === 401){
+            if(error.response.status === 401 && isMounted === true){
                 toast.warning("Session expired")
                 logout()
             }
+            isMounted = false
           })
          
           
@@ -349,11 +452,60 @@ function NewRequisition() {
           catch(error){
             console.log(error)
             toast.warning("session timeout")
-            logout()
+     
           }
         }
         MasterItem()
+        return () => {
+          isMounted = false; // Cleanup flag on unmount
+        };
     },[])
+    useLayoutEffect(()=>{
+   let isMounted = true
+   function editablerow(){ 
+      if(editrow.current){
+        console.log("Editable row",editrow.current)
+        setSelectValue({
+          ...selectValue,
+          id:editrow.current.id,
+          type:editrow.current.type,
+          itemcategory:editrow.current.itemcategory?.id,
+          itemfamily:editrow.current.itemfamily?.id,
+          itemtypes:editrow.current.itemtype?.id,
+          subtype1:editrow.current.subtype1?.name,
+          subtype2:editrow.current.subtype2?.name,
+          moc:editrow.current.mtofconst.id,
+          meterialgrade:editrow.current.materialg,
+          itemmake:editrow.current.itemmake,
+          specification:editrow.current.specification,
+          dimension:editrow.current.dimension?.id,
+          otherdetails:editrow.current.otherdetails?.id,
+          process:editrow.current.process?.id,
+          stage:editrow.current.stage?.id,
+          supplytype:editrow.current.supplytype?.id,
+          stockingtype:editrow.current.stockingtype?.id,
+          glclass:editrow.current.glclass?.id,
+          uom:editrow.current.uom?.id,
+          linetype:editrow.current.linetype?.id,
+          hsn:editrow.current.hsn?.id,
+          commodity:editrow.current.commodity?.id,
+          subcommodity:editrow.current.subcommodity?.id,
+          slno:editrow.current.slno,
+          itemno:editrow.current.itemcode,
+          description:editrow.current.description,
+        })
+      }
+    }
+    if(isMounted===true){
+      editablerow()
+    }
+    return ()=>{
+      isMounted = false
+    }
+  
+     
+     
+    },[editrow.current])
   return (
     <div>
     <Dialog onClose={()=>setOpen(false)} open={open}>
@@ -388,6 +540,7 @@ function NewRequisition() {
     </Dialog>
     {   loading?<h3>Loading ......</h3>: 
         <form onSubmit={handleUserForm} className="p-2">
+<FaWindowClose className='float-end text-xl mr-2' onClick={props.toggleDrawer(false)} />
         <FormControl >
                 
                 <RadioGroup
@@ -403,7 +556,7 @@ function NewRequisition() {
               <Box
                 
                 sx={{
-                    '& > :not(style)': { m: 1, width: '100',display:'flex',flexDirection:'column',gap:'5'
+                    '& > :not(style)': { m: 1,gap:'5'
                      },
                      '& .MuiInputBase-root': { 
                                    fontSize: '0.85rem' // Decrease font size for TextField
@@ -473,6 +626,8 @@ function NewRequisition() {
                         <TextField {...params} label="Item Family" />
                       )}
                     />
+                  
+                  
                   <Autocomplete
                       disablePortal
                       size="small"
@@ -482,8 +637,8 @@ function NewRequisition() {
                       getOptionLabel={(option) => option.name} // function to display option label
                       value={itemType.find((item) => item.id === selectValue.itemtypes) || null} // determine the selected value
                       onChange={(event, newValue) => {
-                      setSubType1(master.subtype.filter(element=>element.type === type && element.itemtype === newValue.id && element.subtype1 !==""))
-                      setSubType2(master.subtype.filter(element=>element.type === type && element.itemtype === newValue.id && element.subtype2 !==""))
+                      setSubType1(master.subtype1.filter(element=>element.type === type && element.itemtype === newValue.id))
+                      setSubType2(master.subtype2.filter(element=>element.type === type && element.itemtype === newValue.id))
                         
                         setSelectValue({ ...selectValue, itemtypes: newValue ? newValue.id : '' });
                       }}
@@ -497,58 +652,86 @@ function NewRequisition() {
                         <TextField {...params} label="Item Types" />
                       )}
                     />
-                    
+                  
+                 
                   <Autocomplete
                       disablePortal
                       size="small"
                       classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
                       id="subtype1_autocomplete"
                       options={subtype1} // the options prop expects an array of objects
-                      getOptionLabel={(option) => option.subtype1} // function to display option label
-                      value={subtype1.find((item) => item.subtype1 === selectValue.subtype1) || null} // determine the selected value
+                      getOptionLabel={(option) => option.name} // function to display option label
+                      value={subtype1.find((item) => item.name === selectValue.subtype1) || null} // determine the selected value
                       onChange={(event, newValue) => {
-                        
-                        setSelectValue({ ...selectValue, subtype1: newValue ? newValue.subtype1 : '' });
+                        console.log(newValue)
+                        setSelectValue({ ...selectValue, subtype1: newValue ? newValue.name : '' });
                       }}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
                       renderOption={(props, option) => (
                           <li {...props} key={option.id}>
-                            {option.subtype1}
+                            {option.name}
                           </li>
                         )}
                       renderInput={(params) => (
                         <TextField {...params} label="Sub Type1" />
                       )}
                     />
+                 
     
                   {
-                    type === 'direct'?<Autocomplete
+                    type === 'direct'? 
+                    <Autocomplete
                       disablePortal
                       size="small"
                       classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
                       id="subtype2_autocomplete"
                       options={subtype2} // the options prop expects an array of objects
-                      getOptionLabel={(option) => option.subtype2} // function to display option label
-                      value={subtype2.find((item) => item.subtype2 === selectValue.subtype2) || null} // determine the selected value
+                      getOptionLabel={(option) => option.name} // function to display option label
+                      value={subtype2.find((item) => item.name === selectValue.subtype2) || null} // determine the selected value
                       onChange={(event, newValue) => {
                         
-                        setSelectValue({ ...selectValue, subtype2: newValue ? newValue.subtype2 : '' });
+                        setSelectValue({ ...selectValue, subtype2: newValue ? newValue.name : '' });
                       }}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
                       renderOption={(props, option) => (
                           <li {...props} key={option.id}>
-                            {option.subtype2}
+                            {option.name}
                           </li>
                         )}
                       renderInput={(params) => (
                         <TextField {...params} label="Sub Type2" />
                       )}
-                    />:""
+                    />
+                     
+                    :""
                 }
                 {
                   type === "direct"?
                   <div>
                   <Autocomplete
+                    disablePortal
+                    size="small"
+                    sx={{marginTop:"10px"}}
+                    classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm '}}
+                    id="mtgrade_autocomplete"
+                    options={mg} // the options prop expects an array of objects
+                    getOptionLabel={(option) => option.name} // function to display option label
+                    value={mg.find((item) => item.name === selectValue.meterialgrade) || null} // determine the selected value
+                    onChange={(event, newValue) => {
+                      setSelectValue({ ...selectValue, meterialgrade: newValue ? newValue.name : '',materialg:newValue?newValue.id:"" });
+                    }}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            {option.name}
+                          </li>
+                        )}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Meterial Grade" />
+                    )}
+                  />
+                  <Autocomplete
+                  className='mt-2'
                     disablePortal
                     size="small"
                     classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
@@ -567,45 +750,112 @@ function NewRequisition() {
                           </li>
                         )}
                     renderInput={(params) => (
-                      <TextField {...params} label="Metal of construction" />
+                      <TextField {...params} label="Meterial of construction" />
                     )}
                   />
-                <Autocomplete
-                    disablePortal
-                    size="small"
-                    sx={{marginTop:"10px"}}
-                    classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm '}}
-                    id="mtgrade_autocomplete"
-                    options={mg} // the options prop expects an array of objects
-                    getOptionLabel={(option) => option} // function to display option label
-                    value={mg.find((item) => item === selectValue.meterialgrade) || null} // determine the selected value
-                    onChange={(event, newValue) => {
-                      setSelectValue({ ...selectValue, meterialgrade: newValue ? newValue : '' });
-                    }}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    renderOption={(props, option) => (
-                          <li {...props} key={option}>
-                            {option}
-                          </li>
-                        )}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Meterial Grade" />
-                    )}
-                  />
+               
                   </div>
                   :""
                   }
                     {
                       type === 'indirect'?
-                      <TextField size="small" id="itemmake" className="mt-4 text-sm" onChange={(e)=>setSelectValue({...selectValue,itemmake:e.target.value})} value={selectValue.itemmake} label="Item make" name="itemmake" variant="outlined" InputLabelProps={{shrink: true,}} />
+                      <Autocomplete
+                        disablePortal
+                        size="small"
+                        sx={{marginTop:"10px"}}
+                        classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm '}}
+                        id="itemmake_autocomplete"
+                        options={itemmake} // the options prop expects an array of objects
+                        getOptionLabel={(option) => option} // function to display option label
+                        value={itemmake.find((item) => item.id === selectValue.itemmake) || null} // determine the selected value
+                        onChange={(event, newValue) => {
+                          setSelectValue({ ...selectValue, itemmake: newValue ? newValue.id : '' });
+                        }}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        renderOption={(props, option) => (
+                              <li {...props} key={option.id}>
+                                {option.name}
+                              </li>
+                            )}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Item Make" />
+                        )}
+                      />
                       :""
                     }
-                  <TextField size="small" id="specification" onChange={(e)=>setSelectValue({...selectValue,specification:e.target.value})} value={selectValue.specification} label="Specification" name="specification" variant="outlined" InputLabelProps={{shrink: true,}} />
+                    {
+                      selectValue.itemfamily === 63?
+                      <Autocomplete
+                        disablePortal
+                        size="small"
+                        sx={{marginTop:"10px"}}
+                        classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm '}}
+                        id="specification_autocomplete"
+                        options={specification} // the options prop expects an array of objects
+                        getOptionLabel={(option) => option} // function to display option label
+                        value={specification.find((item) => item.id === selectValue.specification) || null} // determine the selected value
+                        onChange={(event, newValue) => {
+                          setSelectValue({ ...selectValue, specification: newValue ? newValue.id : '' });
+                        }}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        renderOption={(props, option) => (
+                              <li {...props} key={option.id}>
+                                {option.name}
+                              </li>
+                            )}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Item Make" />
+                        )}
+                      />
+                      :""
+                    }
                   {
-                      type === 'indirect'?
+                    familyids.includes(selectValue.itemfamily)?
                       <div>
-                      <TextField size="small" id="dimension" className="text-sm mt-4" onChange={(e)=>setSelectValue({...selectValue,dimension:e.target.value})} value={selectValue.dimension} label="Dimension" name="dimension" variant="outlined" InputLabelProps={{shrink: true,}} />
-                      <TextField size="small" id="otherdetails" sx={{marginTop:'10px'}} className="text-sm mt-4" onChange={(e)=>setSelectValue({...selectValue,otherdetails:e.target.value})} value={selectValue.otherdetails} label="Other Details" name="otherdetails" variant="outlined" InputLabelProps={{shrink: true,}} />
+                      <Autocomplete
+                        disablePortal
+                        size="small"
+                        sx={{marginTop:"10px"}}
+                        classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm '}}
+                        id="dimensions_autocomplete"
+                        options={dimensions} // the options prop expects an array of objects
+                        getOptionLabel={(option) => option.name} // function to display option label
+                        value={dimensions.find((item) => item.id === selectValue.dimension) || null} // determine the selected value
+                        onChange={(event, newValue) => {
+                          setSelectValue({ ...selectValue, dimension: newValue ? newValue.id : '' });
+                        }}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        renderOption={(props, option) => (
+                              <li {...props} key={option.id}>
+                                {option.name}
+                              </li>
+                            )}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Dimension" />
+                        )}
+                      />
+                       <Autocomplete
+                        disablePortal
+                        size="small"
+                        sx={{marginTop:"10px"}}
+                        classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm '}}
+                        id="otherdetails_autocomplete"
+                        options={otherdetails} // the options prop expects an array of objects
+                        getOptionLabel={(option) => option.name} // function to display option label
+                        value={otherdetails.find((item) => item.id === selectValue.otherdetails) || null} // determine the selected value
+                        onChange={(event, newValue) => {
+                          setSelectValue({ ...selectValue, otherdetails: newValue ? newValue.id : '' });
+                        }}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        renderOption={(props, option) => (
+                              <li {...props} key={option.id}>
+                                {option.name}
+                              </li>
+                            )}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Other Details" />
+                        )}
+                      />
                       </div>
                       
                       :""
@@ -717,7 +967,7 @@ function NewRequisition() {
                       classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
                       id="glclass_autocomplete"
                       options={glclass} // the options prop expects an array of objects
-                      getOptionLabel={(option) => `${option.name} (${option.assignedNo})`} // function to display option label
+                      getOptionLabel={(option) => `${option.assignedNo}`} // function to display option label
                       value={glclass.find((item) => item.id === selectValue.glclass) || null} // determine the selected value
                       onChange={(event, newValue) => {
                         
@@ -726,7 +976,7 @@ function NewRequisition() {
                       isOptionEqualToValue={(option, value) => option.id === value.id}
                       renderOption={(props, option) => (
                           <li {...props} key={option.id}>
-                            {option.name}
+                            {option.assignedNo}
                           </li>
                         )}
                       renderInput={(params) => (
@@ -739,7 +989,7 @@ function NewRequisition() {
                       classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
                       id="uom_autocomplete"
                       options={uom} // the options prop expects an array of objects
-                      getOptionLabel={(option) => option.name} // function to display option label
+                      getOptionLabel={(option) => `${option.shortform}`} // function to display option label
                       value={uom.find((item) => item.id === selectValue.uom) || null} // determine the selected value
                       onChange={(event, newValue) => {
                         
@@ -748,11 +998,33 @@ function NewRequisition() {
                       isOptionEqualToValue={(option, value) => option.id === value.id}
                       renderOption={(props, option) => (
                           <li {...props} key={option.id}>
-                            {option.name}
+                            {option.shortform}
                           </li>
                         )}
                       renderInput={(params) => (
                         <TextField {...params} label="UOM" />
+                      )}
+                    />
+                    <Autocomplete
+                      disablePortal
+                      size="small"
+                      classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
+                      id="hsn_autocomplete"
+                      options={hsn} // the options prop expects an array of objects
+                      getOptionLabel={(option) => `${option.name}`} // function to display option label
+                      value={hsn.find((item) => item.id === selectValue.hsn) || null} // determine the selected value
+                      onChange={(event, newValue) => {
+                        
+                        setSelectValue({ ...selectValue, hsn: newValue ? newValue.id : '' });
+                      }}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            {option.name}
+                          </li>
+                        )}
+                      renderInput={(params) => (
+                        <TextField {...params} label="HSN" />
                       )}
                     />
                   <Autocomplete
@@ -761,7 +1033,7 @@ function NewRequisition() {
                       classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
                       id="linetype_autocomplete"
                       options={lineType} // the options prop expects an array of objects
-                      getOptionLabel={(option) => option.name} // function to display option label
+                      getOptionLabel={(option) => `${option.name}`} // function to display option label
                       value={lineType.find((item) => item.id === selectValue.linetype) || null} // determine the selected value
                       onChange={(event, newValue) => {
                         
@@ -778,11 +1050,53 @@ function NewRequisition() {
                       )}
                     />
                   
-                  
-                  <div className='flex gap-2 mt-4'>
-                    <Button variant="contained" onClick={generatecode} >Generate</Button>
-                   
-                  </div> 
+                  <Autocomplete
+                      disablePortal
+                      size="small"
+                      classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
+                      id="commodity_autocomplete"
+                      options={commodity} // the options prop expects an array of objects
+                      getOptionLabel={(option) => `${option.name}`} // function to display option label
+                      value={commodity.find((item) => item.id === selectValue.commodity) || null} // determine the selected value
+                      onChange={(event, newValue) => {
+                        
+                        setSelectValue({ ...selectValue, commodity: newValue ? newValue.id : '' });
+                      }}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            {option.name}
+                          </li>
+                        )}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Commodity Class" />
+                      )}
+                    />
+                 <Autocomplete
+                      disablePortal
+                      size="small"
+                      classes={{ input: 'autoComplete-text', option: 'autoComplete-text text-sm'}}
+                      id="subCommodity_autocomplete"
+                      options={subcommodity} // the options prop expects an array of objects
+                      getOptionLabel={(option) => `${option.name}`} // function to display option label
+                      value={subcommodity.find((item) => item.id === selectValue.subcommodity) || null} // determine the selected value
+                      onChange={(event, newValue) => {
+                        
+                        setSelectValue({ ...selectValue, subcommodity: newValue ? newValue.id : '' });
+                      }}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            {option.name}
+                          </li>
+                        )}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Commodity Sub Class" />
+                      )}
+                    />
+                      <Button variant="contained" onClick={generatecode}>Generate</Button>
+                 
+             
               
                 
               </Box>

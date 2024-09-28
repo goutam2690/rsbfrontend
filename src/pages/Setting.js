@@ -21,7 +21,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 
 
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://127.0.0.1:8000';
+axios.defaults.baseURL = 'http://143.110.243.227';
 
 
 
@@ -359,6 +359,8 @@ function Setting() {
                 >
                   
                   <TextField id="username" label="Username" name="username" variant="outlined" InputLabelProps={{shrink: true,}} value={row.username} onChange={(e)=>(setrow((prevdata)=>({...prevdata,username:e.target.value})))} />
+                  <TextField id="fname" label="Full Name" name="fname" variant="outlined" InputLabelProps={{shrink: true,}} value={row.fname} onChange={(e)=>(setrow((prevdata)=>({...prevdata,fname:e.target.value})))} />
+
                   <TextField id="email" label="Email" name="email" variant="outlined" InputLabelProps={{shrink: true,}} value={row.email} onChange={(e)=>(setrow((prevdata)=>({...prevdata,email:e.target.value})))} />
                   
                   <FormControl fullWidth>

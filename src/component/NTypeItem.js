@@ -3,10 +3,6 @@ import { toast } from 'react-toastify';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import { DataGrid } from '@mui/x-data-grid';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
 import Button from '@mui/material/Button';
 import Cookies from 'universal-cookie';
 import { AuthContext } from '../AuthContext';
@@ -138,6 +134,7 @@ function NTypeItem({heading,apiurl}) {
         
     }
     useEffect(()=>{
+      let isMounted = true;
         const cookies = new Cookies()
         const token = cookies.get('access')
         try{
@@ -149,15 +146,17 @@ function NTypeItem({heading,apiurl}) {
           });
           res
           .then((response)=>{
-           
+           if(response.status === 200 && isMounted === true){
             const cat = response.data?response.data:null
             console.log(cat)
             setData(cat.item)
             setTempData(cat.item)
+           }
+          
           })
           .catch((error)=>{
             console.error("catched error",error.response.status)
-            if(error.response.status === 401){
+            if(error.response.status === 401 && isMounted===true){
                 toast.warning("Session expired")
                 logout()
             }
@@ -170,6 +169,9 @@ function NTypeItem({heading,apiurl}) {
             toast.warning("session timeout")
             logout()
           }
+          return () => {
+            isMounted = false; // Cleanup flag on unmount
+          };
     },[])
   return (
     <>
@@ -184,13 +186,13 @@ function NTypeItem({heading,apiurl}) {
                         paginationModel: { page: 0, pageSize: 5 },
                     },
                     }}
-                    pageSizeOptions={[5, 10]}
+                    pageSizeOptions={[5, 10,50]}
                     checkboxSelection
                     onRowClick={handleRowClick}
                 />
             </div>
             <div className="p-2">
-            <form>
+            <form onSubmit={handleItemForm}>
             
                 <Box
                     
