@@ -36,7 +36,7 @@ import ItemMake from './pages/ItemMake';
 import OtherDetails from './pages/OtherDetails';
 import Notation from './component/Notation';
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://127.0.0.1:8000';
+axios.defaults.baseURL = 'http://143.110.243.227';
 
 
 function App() {
